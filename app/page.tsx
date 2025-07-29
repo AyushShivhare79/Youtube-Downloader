@@ -5,15 +5,18 @@ import { Input } from "@/components/ui/input";
 import { FaGithub } from "react-icons/fa6";
 import axios from "axios";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const [url, setUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoFormats, setVideoFormats] = useState([]);
 
   const handleDownload = async () => {
     const response = await axios.post("/api/download", { url });
     console.log("Response: ", response.data);
     setVideoUrl(response.data.format.url);
+    setVideoFormats(response.data.videoFormats);
   };
 
   return (
@@ -40,6 +43,22 @@ export default function Home() {
             Start
           </Button>
         </div>
+        {videoFormats && (
+          <div className="flex flex-col items-center gap-2">
+            {videoFormats.map((format, index) => (
+              <div key={index} className="border p-2 rounded-lg w-2/4">
+                <div className="flex items-center gap-2">
+                  <p> {format.qualityLabel}.mp4</p>
+                  <Button asChild>
+                    <Link target="_blank" href={format.url}>
+                      Download
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {/* {videoUrl && <video controls src={videoUrl}></video>} */}
 
         <footer className="text-center border">Made with ❤️ by humans</footer>
