@@ -3,14 +3,32 @@ import ytdl from "@distube/ytdl-core";
 
 const Download = async (req: NextRequest, res: NextResponse) => {
   const { url } = await req.json();
+  console.log("URL: ", url);
+  const info = await ytdl.getInfo(url as string);
 
-  const info = await ytdl.getBasicInfo(url as string);
-  console.log("VideoId: ", info.videoDetails.videoId);
-  console.log("Thumbnail url: ", info.videoDetails.thumbnails[0].url);
-  console.log("Title: ", info.videoDetails.title);
-  console.log("Duration: ", info.videoDetails.lengthSeconds, " seconds");
+  const videoFormats = ytdl.filterFormats(info.formats, "videoandaudio");
+  console.log("Formats: ", videoFormats);
 
-  return NextResponse.json({ message: "Done fetching" });
+  const format = ytdl.chooseFormat(videoFormats, {
+    quality: "highest",
+  });
+
+  console.log("Chosen format: ", format);
+
+  // console.log("VideoId: ", info.videoDetails.videoId);
+  // console.log("Thumbnail url: ", info.videoDetails.thumbnails[0].url);
+  // console.log("Title: ", info.videoDetails.title);
+  // console.log("Duration: ", info.videoDetails.lengthSeconds, " seconds");
+
+  const stream = ytdl(url as string, {
+    filter: "audioonly",
+    quality: "highestaudio",
+  });
+  console.log("Stream created: ", stream);
+
+  return NextResponse.json({
+    format,
+    stream,
+  });
 };
-
 export { Download as GET, Download as POST };
