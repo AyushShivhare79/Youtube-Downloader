@@ -3,19 +3,51 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaGithub } from "react-icons/fa6";
 
+interface VideoInfo {
+  videoDetails: {
+    title: string;
+    lengthSeconds: number;
+    thumbnails: { url: string }[];
+  };
+}
+interface VideoFormat {
+  qualityLabel: string;
+  hasVideo: boolean;
+  hasAudio: boolean;
+  url: string;
+}
+
 export default function Home() {
-  const [url, setUrl] = useState("");
-  const [videoFormats, setVideoFormats] = useState([]);
-  const [videoInfo, setVideoInfo] = useState(null);
+  const [url, setUrl] = useState<string>("");
+  const [videoFormats, setVideoFormats] = useState<VideoFormat[]>([]);
+  const [videoInfo, setVideoInfo] = useState<VideoInfo>();
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "/") {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          event.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, []);
 
   const handleFetch = async () => {
     const response = await axios.post("/api/download", { url });
-    console.log("Response: ", response.data);
     setVideoFormats(response.data.videoFormats);
     setVideoInfo(response.data.info);
   };
@@ -28,10 +60,10 @@ export default function Home() {
           <FaGithub size={30} />
         </Link>
       </header>
-
       <div className="h-[90dvh] border border-green-500">
         <div className=" flex items-center justify-center gap-2 w-2/4 border mx-auto my-10 p-4">
           <Input
+            ref={inputRef}
             className="rounded-2xl"
             autoComplete="off"
             placeholder="Enter YouTube video URL"
@@ -49,7 +81,7 @@ export default function Home() {
 
         <section className=" border border-red-500">
           {videoInfo && (
-            <div className="flex justify-center items-center border border-white">
+            <div className="flex gap-10 justify-center items-center border border-white">
               <Image
                 height={300}
                 width={300}
@@ -71,14 +103,15 @@ export default function Home() {
           )}
 
           {videoFormats && (
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex space-y-2 my-2 flex-col items-center gap-2">
+              <h1>Video</h1>
               {videoFormats
                 .filter((format) => format.hasVideo && format.hasAudio)
                 .map((format, index) => (
                   <div key={index} className="border p-2 rounded-lg w-2/4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex justify-between px-20 items-center gap-2">
                       <p> {format.qualityLabel}.mp4</p>
-                      <Button asChild>
+                      <Button variant={"secondary"} asChild>
                         <Link target="_blank" href={format.url}>
                           Download
                         </Link>
@@ -86,6 +119,9 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+
+              <h1>Audio</h1>
+              <div></div>
             </div>
           )}
         </section>
