@@ -28,6 +28,7 @@ export default function Home() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo>();
 
   const inputRef = useRef<HTMLInputElement>(null);
+  console.log("Video Formats:", videoFormats);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -54,14 +55,14 @@ export default function Home() {
 
   return (
     <div className="bg-black text-white ">
-      <header className="h-[7dvh] flex items-center justify-between p-4">
+      <header className="h-[7dvh] flex items-center justify-between p-4 px-10">
         <h1 className="text-2xl font-medium">Youtube video downloader</h1>
         <Link target="_blank" href={process.env.NEXT_PUBLIC_GITHUB_REPO!}>
           <FaGithub size={30} />
         </Link>
       </header>
-      <div className="h-[90dvh] border border-green-500">
-        <div className=" flex items-center justify-center gap-2 w-2/4 border mx-auto my-10 p-4">
+      <div className="h-[90dvh] ">
+        <div className=" flex items-center justify-center gap-2 w-2/4 mx-auto my-10 p-4">
           <Input
             ref={inputRef}
             className="rounded-2xl"
@@ -79,9 +80,9 @@ export default function Home() {
           </Button>
         </div>
 
-        <section className=" border border-red-500">
+        <section>
           {videoInfo && (
-            <div className="flex gap-10 justify-center items-center border border-white">
+            <div className="flex gap-10 justify-center items-center ">
               <Image
                 height={300}
                 width={300}
@@ -102,13 +103,13 @@ export default function Home() {
             </div>
           )}
 
-          {videoFormats && (
+          {videoFormats.length > 0 && (
             <div className="flex space-y-2 my-2 flex-col items-center gap-2">
               <h1>Video</h1>
               {videoFormats
-                .filter((format) => format.hasVideo && format.hasAudio)
+                // .filter((format) => format.hasVideo)
                 .map((format, index) => (
-                  <div key={index} className="border p-2 rounded-lg w-2/4">
+                  <div key={index} className=" p-2 rounded-lg w-2/4">
                     <div className="flex justify-between px-20 items-center gap-2">
                       <p> {format.qualityLabel}.mp4</p>
                       <Button variant={"secondary"} asChild>
@@ -126,9 +127,7 @@ export default function Home() {
           )}
         </section>
       </div>
-      <footer className="text-center h-[3dvh] border border-blue-500">
-        Made with ❤️ by humans
-      </footer>
+      <footer className="text-center h-[3dvh] ">Made with ❤️ by humans</footer>
     </div>
   );
 }
