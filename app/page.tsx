@@ -55,7 +55,7 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await axios.post("/api/quality", { url });
+      const response = await axios.post("/api/download", { url });
       setVideoInfo(response.data);
       console.log("Video Info:", videoInfo);
       console.log("API Response:", response.data);
@@ -73,44 +73,48 @@ export default function Home() {
       // Create a loading message for the user
       const downloadMessage = `Starting download for ${quality} quality...`;
       alert(downloadMessage);
-      
+
       // Make a POST request to the download API endpoint with responseType set to 'blob'
-      const response = await axios.post("/api/download", {
-        url,
-        selectedQuality: quality,
-      }, {
-        responseType: 'blob' // Important: This tells Axios to handle the response as a binary blob
-      });
-      
+      const response = await axios.post(
+        "/api/download",
+        {
+          url,
+          selectedQuality: quality,
+        },
+        {
+          responseType: "blob", // Important: This tells Axios to handle the response as a binary blob
+        }
+      );
+
       // Create a blob URL from the response data
-      const blob = new Blob([response.data], { type: 'video/mp4' });
+      const blob = new Blob([response.data], { type: "video/mp4" });
       const downloadUrl = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element to trigger the download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      
+
       // Set the filename from the Content-Disposition header if available, otherwise use a default name
-      const contentDisposition = response.headers['content-disposition'];
-      let filename = 'youtube_video.mp4';
-      
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "youtube_video.mp4";
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
           filename = filenameMatch[1];
         }
       }
-      
-      link.setAttribute('download', filename);
+
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up by removing the link and revoking the blob URL
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error('Download error:', error);
-      setError('Failed to download video. Please try again.');
+      console.error("Download error:", error);
+      setError("Failed to download video. Please try again.");
     } finally {
       setIsLoading(false);
     }
