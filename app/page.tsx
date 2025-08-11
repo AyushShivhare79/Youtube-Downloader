@@ -5,8 +5,19 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { FaGithub } from "react-icons/fa6";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface VideoInfo {
   title: string;
@@ -23,11 +34,15 @@ interface QualityOption {
   container: string;
 }
 
+const formSchema = z.object({
+  url: z.string().url("Please enter a valid YouTube URL").min(2).max(2000),
+  selectedQuality: z.string().optional(),
+});
+
 export default function Home() {
   const [url, setUrl] = useState<string>("");
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,22 +61,15 @@ export default function Home() {
   }, []);
 
   const handleFetch = async () => {
-    if (!url.trim()) {
-      setError("Please enter a valid YouTube URL");
-      return;
-    }
-
     setIsLoading(true);
-    setError("");
 
     try {
-      const response = await axios.post("/api/quality", { url });
+      const response = await axios.post("/api/download", { url });
       setVideoInfo(response.data);
       console.log("Video Info:", videoInfo);
       console.log("API Response:", response.data);
     } catch (err) {
       console.error("Error fetching video:", err);
-      setError("Failed to process video. Please check the URL and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -73,49 +81,65 @@ export default function Home() {
       // Create a loading message for the user
       const downloadMessage = `Starting download for ${quality} quality...`;
       alert(downloadMessage);
-      
+
       // Make a POST request to the download API endpoint with responseType set to 'blob'
-      const response = await axios.post("/api/download", {
-        url,
-        selectedQuality: quality,
-      }, {
-        responseType: 'blob' // Important: This tells Axios to handle the response as a binary blob
-      });
-      
+      const response = await axios.post(
+        "/api/download",
+        {
+          url,
+          selectedQuality: quality,
+        },
+        {
+          responseType: "blob", // Important: This tells Axios to handle the response as a binary blob
+        }
+      );
+
       // Create a blob URL from the response data
-      const blob = new Blob([response.data], { type: 'video/mp4' });
+      const blob = new Blob([response.data], { type: "video/mp4" });
       const downloadUrl = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element to trigger the download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      
+
       // Set the filename from the Content-Disposition header if available, otherwise use a default name
-      const contentDisposition = response.headers['content-disposition'];
-      let filename = 'youtube_video.mp4';
-      
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "youtube_video.mp4";
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
           filename = filenameMatch[1];
         }
       }
-      
-      link.setAttribute('download', filename);
+
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up by removing the link and revoking the blob URL
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error('Download error:', error);
-      setError('Failed to download video. Please try again.');
+      console.error("Download error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      url: "",
+    },
+  });
+
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values);
+  }
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
       <header className="h-[7dvh] flex items-center justify-between p-4 px-10">
@@ -125,28 +149,42 @@ export default function Home() {
         </Link>
       </header>
 
-      <div className="flex-grow flex flex-col items-center">
-        <div className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-10 p-4">
-          <Input
-            ref={inputRef}
-            className="rounded-2xl"
-            autoComplete="off"
-            placeholder="Enter YouTube video URL (Press / to focus)"
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleFetch()}
-            disabled={isLoading}
-          />
-          <Button
-            className="rounded-2xl"
-            variant={"secondary"}
-            onClick={handleFetch}
-            disabled={isLoading}
+      <div className="flex-grow border flex flex-col items-center">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-10 p-4 border"
           >
-            {isLoading ? "Processing..." : "Start"}
-          </Button>
-        </div>
-
-        {error && <div className="text-red-500 mb-4">{error}</div>}
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormControl>
+                    <div className="flex items-center gap-2 w-full">
+                      <Input
+                        className="rounded-2xl flex-1"
+                        autoComplete="off"
+                        placeholder="Enter YouTube video URL (Press / to focus)"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                      <Button
+                        className="rounded-2xl whitespace-nowrap"
+                        variant={"secondary"}
+                        disabled={isLoading}
+                        type="submit"
+                      >
+                        {isLoading ? "Processing..." : "Start"}
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
 
         {videoInfo && (
           <div className="w-full max-w-3xl px-4">

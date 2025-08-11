@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "axios": "^1.11.0",
     "childprocess": "^2.0.2",
@@ -23,9 +25,11 @@
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
     "tailwind-merge": "^3.3.1",
-    "youtube-dl-exec": "^3.0.23"
+    "youtube-dl-exec": "^3.0.23",
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
