@@ -14,13 +14,10 @@ export async function POST(req: NextRequest) {
   const videoFormats = ytdl.filterFormats(info.formats, "videoonly");
   const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
 
-  // Get the best audio track
   const bestAudio = getBestAudioTrack(audioFormats);
 
-  // Filter out unique resolutions (quality levels)
   const availableQualities = getUniqueResolutions(videoFormats);
 
-  // Get best video format for each quality level
   const bestVideoOptions = availableQualities
     .map((quality) => {
       return getBestVideoForQuality(videoFormats, quality);
@@ -72,7 +69,6 @@ export async function POST(req: NextRequest) {
   console.log("Video Stream URL:", videoStreamURL);
   console.log("Audio Stream URL:", audioStreamURL);
 
-  // Only proceed with merging if we have both video and audio streams
   if (!videoStreamURL || !audioStreamURL) {
     return new Response(
       JSON.stringify({ error: "Missing video or audio stream URL" }),
@@ -117,59 +113,4 @@ export async function POST(req: NextRequest) {
       "Transfer-Encoding": "chunked",
     },
   });
-}
-
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url).searchParams.get("url");
-
-  if (!url) {
-    return new Response(JSON.stringify({ error: "URL is required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  try {
-    const info = await ytdl.getInfo(url);
-    const videoFormats = ytdl.filterFormats(info.formats, "videoonly");
-    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-
-    // Get the best audio track
-    const bestAudio = getBestAudioTrack(audioFormats);
-
-    // Filter out unique resolutions
-    const availableQualities = getUniqueResolutions(videoFormats);
-
-    // Get best video format for each quality level
-    const bestVideoOptions = availableQualities
-      .map((quality) => getBestVideoForQuality(videoFormats, quality))
-      .filter(Boolean);
-
-    return new Response(
-      JSON.stringify({
-        title: info.videoDetails.title,
-        availableQualities: bestVideoOptions.map((option) => ({
-          quality: option.qualityLabel,
-          width: option.width,
-          height: option.height,
-          fps: option.fps,
-          container: option.container,
-        })),
-        audioQuality:
-          bestAudio?.audioBitrate || bestAudio?.bitrate || "unknown",
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Failed to fetch video info" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
 }
