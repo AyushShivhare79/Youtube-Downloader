@@ -1,23 +1,18 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Loader2Icon } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import axios from "axios";
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { FaGithub } from "react-icons/fa6";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+import { Loader2Icon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import axios from 'axios';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { FaGithub } from 'react-icons/fa6';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { toast } from 'sonner';
+import { SkewLoader } from 'react-spinners';
 
 interface VideoInfo {
   title: string;
@@ -28,37 +23,37 @@ interface VideoInfo {
 
 interface QualityOption {
   quality: string;
-  width: number;
-  height: number;
-  fps: number;
-  container: string;
 }
 
 const formSchema = z.object({
-  url: z.string().url("Please enter a valid YouTube URL").min(2).max(2000),
+  url: z.string().url('Please enter a valid YouTube URL').min(2).max(2000),
   selectedQuality: z.string().optional(),
 });
 
 export default function Home() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
-  const [url, setUrl] = useState<string>("");
+  const [url, setUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [downloadLoad, setDownloadLoad] = useState<string>("");
+  const [downloadLoad, setDownloadLoad] = useState<string>('');
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "/") {
-        if (inputRef.current) {
+      if (event.key === '/') {
+        const isInputFocused = document.activeElement === inputRef.current;
+
+        if (!isInputFocused && inputRef.current) {
           inputRef.current.focus();
           event.preventDefault();
         }
       }
     };
-    window.addEventListener("keydown", handleKeyPress);
+
+    window.addEventListener('keydown', handleKeyPress);
+
     return () => {
-      window.removeEventListener("keydown", handleKeyPress);
+      window.removeEventListener('keydown', handleKeyPress);
     };
   }, []);
 
@@ -71,26 +66,26 @@ export default function Home() {
       toast(downloadMessage);
 
       const response = await axios.post(
-        "/api/download",
+        '/api/download',
         {
           url,
           selectedQuality: quality,
         },
         {
-          responseType: "blob", // Important: This tells Axios to handle the response as a binary blob
-        }
+          responseType: 'blob', // Important: This tells Axios to handle the response as a binary blob
+        },
       );
 
-      const blob = new Blob([response.data], { type: "video/mp4" });
+      const blob = new Blob([response.data], { type: 'video/mp4' });
       const downloadUrl = window.URL.createObjectURL(blob);
-      console.log("Download URL:", downloadUrl);
+      console.log('Download URL:', downloadUrl);
 
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = downloadUrl;
 
       // Set the filename from the Content-Disposition header if available, otherwise use a default name
-      const contentDisposition = response.headers["content-disposition"];
-      let filename = "youtube_video.mp4";
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'youtube_video.mp4';
 
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
@@ -99,7 +94,7 @@ export default function Home() {
         }
       }
 
-      link.setAttribute("download", filename);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
 
@@ -107,18 +102,18 @@ export default function Home() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error("Download error:", error);
+      console.error('Download error:', error);
     } finally {
       setIsLoading(false);
-      toast("Process completed!");
-      setDownloadLoad("");
+      toast('Process completed!');
+      setDownloadLoad('');
     }
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      url: "",
+      url: '',
     },
   });
 
@@ -126,37 +121,36 @@ export default function Home() {
     setIsLoading(true);
     setUrl(values.url);
     try {
-      const response = await axios.post("/api/download", { url: values.url });
+      const response = await axios.post('/api/download', { url: values.url });
       setVideoInfo(response.data);
-      console.log("Video Info:", videoInfo);
-      console.log("API Response:", response.data);
+      console.log('Video Info:', videoInfo);
+      console.log('API Response:', response.data);
     } catch (err) {
-      console.error("Error fetching video:", err);
+      console.error('Error fetching video:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-black text-white min-h-screen flex flex-col">
-      <header className="h-[7dvh] flex items-center justify-between p-4 px-10">
+    <div className="flex min-h-screen flex-col bg-black text-white">
+      <header className="flex h-[7dvh] items-center justify-between p-4 px-10">
         <h1 className="text-2xl font-medium">Icon</h1>
         <Link target="_blank" href={process.env.NEXT_PUBLIC_GITHUB_REPO!}>
           <FaGithub size={30} />
         </Link>
       </header>
 
-      <div className="flex-grow flex flex-col items-center">
-        <h1 className="text-4xl w-1/3 leading-relaxed text-center">
-          Download Your Favorite{" "}
-          <span className="text-red-500 font-semibold">YouTube Videos</span>{" "}
+      <div className="flex flex-grow flex-col items-center">
+        <h1 className="w-1/3 text-center text-4xl leading-relaxed">
+          Download Your Favorite <span className="font-semibold text-red-500">YouTube Videos</span>{' '}
           Instantly
         </h1>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-6 p-4 "
+            className="mx-auto my-6 flex w-full max-w-2xl items-center justify-center gap-2 p-4"
           >
             <FormField
               control={form.control}
@@ -164,23 +158,22 @@ export default function Home() {
               render={({ field }) => (
                 <FormItem className="w-full">
                   <FormControl>
-                    <div className="flex items-center gap-2 w-full">
+                    <div className="flex w-full items-center gap-2">
                       <Input
-                        className="rounded-2xl border border-gray-700 focus-visible:border-gray-700  selection:text-blue-500  focus-visible:ring-0 flex-1"
+                        className="flex-1 rounded-2xl border border-gray-700 selection:text-blue-500 focus-visible:border-gray-700 focus-visible:ring-0"
                         autoComplete="off"
                         placeholder="Enter YouTube video URL (Press / to focus)"
                         disabled={isLoading}
                         {...field}
+                        ref={inputRef}
                       />
                       <Button
-                        className={`rounded-2xl whitespace-nowrap ${
-                          isLoading ? "opacity-50" : ""
-                        }`}
+                        className={`rounded-2xl whitespace-nowrap ${isLoading ? 'opacity-50' : ''}`}
                         disabled={isLoading}
-                        variant={"secondary"}
+                        variant={'secondary'}
                         type="submit"
                       >
-                        {isLoading ? "Processing..." : "Start"}
+                        {isLoading ? 'Processing...' : 'Start'}
                       </Button>
                     </div>
                   </FormControl>
@@ -193,20 +186,17 @@ export default function Home() {
 
         {videoInfo && (
           <div className="w-full max-w-3xl px-4">
-            <h2 className="text-2xl font-semibold mb-6 text-center">
-              {videoInfo.title}
-            </h2>
+            {isLoading && <SkewLoader color="#ffffff" />}
+            <h2 className="mb-6 text-center text-2xl font-semibold">{videoInfo.title}</h2>
 
-            <div className="bg-zinc-900 rounded-lg p-6 mb-6">
-              <h3 className="text-xl font-semibold mb-4">
-                Available Quality Options
-              </h3>
+            <div className="mb-6 rounded-lg bg-zinc-900 p-6">
+              <h3 className="mb-4 text-xl font-semibold">Available Quality Options</h3>
 
               <div className="space-y-3">
                 {videoInfo.availableQualities.map((option, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-zinc-800 rounded-md"
+                    className="flex items-center justify-between rounded-md bg-zinc-800 p-3"
                   >
                     <div>
                       <span className="font-medium">{option.quality}</span>
@@ -222,9 +212,7 @@ export default function Home() {
                       )}
 
                       {/* {isLoading ? "Please wait" : "Download"} */}
-                      {downloadLoad.includes(option.quality)
-                        ? "Please wait"
-                        : "Download"}
+                      {downloadLoad.includes(option.quality) ? 'Please wait' : 'Download'}
                     </Button>
                   </div>
                 ))}
@@ -234,7 +222,7 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="text-center py-4">Made with ❤️ by humans</footer>
+      <footer className="py-4 text-center">Made with ❤️ by humans</footer>
     </div>
   );
 }
