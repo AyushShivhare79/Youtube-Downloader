@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Loader2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
@@ -42,6 +43,8 @@ export default function Home() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [url, setUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [downloadLoad, setDownloadLoad] = useState<string>("");
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -62,7 +65,9 @@ export default function Home() {
   const downloadVideo = async (quality: string) => {
     try {
       setIsLoading(true);
-      const downloadMessage = `Starting download for ${quality} quality...`;
+      setDownloadLoad(quality);
+
+      const downloadMessage = `Processing video for ${quality} quality...`;
       toast(downloadMessage);
 
       const response = await axios.post(
@@ -105,6 +110,8 @@ export default function Home() {
       console.error("Download error:", error);
     } finally {
       setIsLoading(false);
+      toast("Process completed!");
+      setDownloadLoad("");
     }
   };
 
@@ -133,18 +140,23 @@ export default function Home() {
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
       <header className="h-[7dvh] flex items-center justify-between p-4 px-10">
-        <h1 className="text-2xl font-medium">Youtube video downloader</h1>
+        <h1 className="text-2xl font-medium">Icon</h1>
         <Link target="_blank" href={process.env.NEXT_PUBLIC_GITHUB_REPO!}>
           <FaGithub size={30} />
         </Link>
       </header>
 
       <div className="flex-grow flex flex-col items-center">
-        <h1>Any fucking thing here</h1>
+        <h1 className="text-4xl w-1/3 leading-relaxed text-center">
+          Download Your Favorite{" "}
+          <span className="text-red-500 font-semibold">YouTube Videos</span>{" "}
+          Instantly
+        </h1>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-10 p-4 "
+            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-6 p-4 "
           >
             <FormField
               control={form.control}
@@ -205,7 +217,14 @@ export default function Home() {
                       disabled={isLoading}
                       className="text-sm"
                     >
-                      Download
+                      {downloadLoad.includes(option.quality) && (
+                        <Loader2Icon className="animate-spin" />
+                      )}
+
+                      {/* {isLoading ? "Please wait" : "Download"} */}
+                      {downloadLoad.includes(option.quality)
+                        ? "Please wait"
+                        : "Download"}
                     </Button>
                   </div>
                 ))}
