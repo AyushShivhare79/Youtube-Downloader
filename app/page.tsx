@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Loader2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
@@ -12,12 +13,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { toast } from "sonner";
 
 interface VideoInfo {
   title: string;
@@ -40,9 +40,11 @@ const formSchema = z.object({
 });
 
 export default function Home() {
-  const [url, setUrl] = useState<string>("");
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
+  const [url, setUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [downloadLoad, setDownloadLoad] = useState<string>("");
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -60,29 +62,14 @@ export default function Home() {
     };
   }, []);
 
-  const handleFetch = async () => {
-    setIsLoading(true);
-
-    try {
-      const response = await axios.post("/api/download", { url });
-      setVideoInfo(response.data);
-      console.log("Video Info:", videoInfo);
-      console.log("API Response:", response.data);
-    } catch (err) {
-      console.error("Error fetching video:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const downloadVideo = async (quality: string) => {
     try {
       setIsLoading(true);
-      // Create a loading message for the user
-      const downloadMessage = `Starting download for ${quality} quality...`;
-      alert(downloadMessage);
+      setDownloadLoad(quality);
 
-      // Make a POST request to the download API endpoint with responseType set to 'blob'
+      const downloadMessage = `Processing video for ${quality} quality...`;
+      toast(downloadMessage);
+
       const response = await axios.post(
         "/api/download",
         {
@@ -94,11 +81,10 @@ export default function Home() {
         }
       );
 
-      // Create a blob URL from the response data
       const blob = new Blob([response.data], { type: "video/mp4" });
       const downloadUrl = window.URL.createObjectURL(blob);
+      console.log("Download URL:", downloadUrl);
 
-      // Create a temporary anchor element to trigger the download
       const link = document.createElement("a");
       link.href = downloadUrl;
 
@@ -124,6 +110,8 @@ export default function Home() {
       console.error("Download error:", error);
     } finally {
       setIsLoading(false);
+      toast("Process completed!");
+      setDownloadLoad("");
     }
   };
 
@@ -134,26 +122,41 @@ export default function Home() {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
-  }
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    setUrl(values.url);
+    try {
+      const response = await axios.post("/api/download", { url: values.url });
+      setVideoInfo(response.data);
+      console.log("Video Info:", videoInfo);
+      console.log("API Response:", response.data);
+    } catch (err) {
+      console.error("Error fetching video:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-black text-white min-h-screen flex flex-col">
       <header className="h-[7dvh] flex items-center justify-between p-4 px-10">
-        <h1 className="text-2xl font-medium">Youtube video downloader</h1>
+        <h1 className="text-2xl font-medium">Icon</h1>
         <Link target="_blank" href={process.env.NEXT_PUBLIC_GITHUB_REPO!}>
           <FaGithub size={30} />
         </Link>
       </header>
 
-      <div className="flex-grow border flex flex-col items-center">
+      <div className="flex-grow flex flex-col items-center">
+        <h1 className="text-4xl w-1/3 leading-relaxed text-center">
+          Download Your Favorite{" "}
+          <span className="text-red-500 font-semibold">YouTube Videos</span>{" "}
+          Instantly
+        </h1>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-10 p-4 border"
+            className="flex items-center justify-center gap-2 w-full max-w-2xl mx-auto my-6 p-4 "
           >
             <FormField
               control={form.control}
@@ -163,16 +166,18 @@ export default function Home() {
                   <FormControl>
                     <div className="flex items-center gap-2 w-full">
                       <Input
-                        className="rounded-2xl flex-1"
+                        className="rounded-2xl border border-gray-700 focus-visible:border-gray-700  selection:text-blue-500  focus-visible:ring-0 flex-1"
                         autoComplete="off"
                         placeholder="Enter YouTube video URL (Press / to focus)"
                         disabled={isLoading}
                         {...field}
                       />
                       <Button
-                        className="rounded-2xl whitespace-nowrap"
-                        variant={"secondary"}
+                        className={`rounded-2xl whitespace-nowrap ${
+                          isLoading ? "opacity-50" : ""
+                        }`}
                         disabled={isLoading}
+                        variant={"secondary"}
                         type="submit"
                       >
                         {isLoading ? "Processing..." : "Start"}
@@ -188,7 +193,7 @@ export default function Home() {
 
         {videoInfo && (
           <div className="w-full max-w-3xl px-4">
-            <h2 className="text-2xl font-bold mb-6 text-center">
+            <h2 className="text-2xl font-semibold mb-6 text-center">
               {videoInfo.title}
             </h2>
 
@@ -196,12 +201,6 @@ export default function Home() {
               <h3 className="text-xl font-semibold mb-4">
                 Available Quality Options
               </h3>
-              <p className="text-zinc-400 mb-4">
-                All options include best audio quality:{" "}
-                {typeof videoInfo.audioQuality === "number"
-                  ? `${videoInfo.audioQuality}kbps`
-                  : videoInfo.audioQuality}
-              </p>
 
               <div className="space-y-3">
                 {videoInfo.availableQualities.map((option, index) => (
@@ -211,16 +210,21 @@ export default function Home() {
                   >
                     <div>
                       <span className="font-medium">{option.quality}</span>
-                      <span className="text-sm text-zinc-400 ml-2">
-                        ({option.width}x{option.height}, {option.fps}fps)
-                      </span>
                     </div>
                     <Button
                       variant="secondary"
                       onClick={() => downloadVideo(option.quality)}
+                      disabled={isLoading}
                       className="text-sm"
                     >
-                      Download
+                      {downloadLoad.includes(option.quality) && (
+                        <Loader2Icon className="animate-spin" />
+                      )}
+
+                      {/* {isLoading ? "Please wait" : "Download"} */}
+                      {downloadLoad.includes(option.quality)
+                        ? "Please wait"
+                        : "Download"}
                     </Button>
                   </div>
                 ))}

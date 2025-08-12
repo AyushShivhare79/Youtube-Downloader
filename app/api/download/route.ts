@@ -28,15 +28,17 @@ export async function POST(req: NextRequest) {
   console.log("Best audio track:", bestAudio);
 
   if (!selectedQuality) {
+    console.log(
+      "Here we go",
+      bestVideoOptions.map((option) => ({
+        option,
+      }))
+    );
     return new Response(
       JSON.stringify({
         title: info.videoDetails.title,
         availableQualities: bestVideoOptions.map((option) => ({
-          quality: option.qualityLabel,
-          width: option.width,
-          height: option.height,
-          fps: option.fps,
-          container: option.container,
+          quality: option?.qualityLabel,
         })),
         audioQuality:
           bestAudio?.audioBitrate || bestAudio?.bitrate || "unknown",
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   const selectedVideo = bestVideoOptions.find(
-    (option) => option.qualityLabel === selectedQuality
+    (option) => option?.qualityLabel === selectedQuality
   );
 
   if (!selectedVideo) {
