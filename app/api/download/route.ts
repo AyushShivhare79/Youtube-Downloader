@@ -6,6 +6,23 @@ import { getBestVideoForQuality } from '@/lib/getBestVideoForQuality';
 import { getUniqueResolutions } from '@/lib/getUniqueResolutions';
 import { PassThrough } from 'stream';
 
+// Helper function to convert Node.js streams to Web API ReadableStream
+function nodeStreamToWebStream(nodeStream: PassThrough): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      nodeStream.on('data', (chunk) => {
+        controller.enqueue(chunk);
+      });
+      nodeStream.on('end', () => {
+        controller.close();
+      });
+      nodeStream.on('error', (err) => {
+        controller.error(err);
+      });
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const { url, selectedQuality } = await req.json();
 
@@ -95,8 +112,10 @@ export async function POST(req: NextRequest) {
 
   command.pipe(outputStream, { end: true });
 
-  // eslint-disable-next-line
-  return new Response(outputStream as any, {
+  // Convert the Node.js PassThrough stream to a Web API ReadableStream
+  const webStream = nodeStreamToWebStream(outputStream);
+
+  return new Response(webStream, {
     headers: {
       'Content-Type': 'video/mp4',
       'Content-Disposition': `attachment; filename="${encodeURIComponent(outputFileName)}"`,
