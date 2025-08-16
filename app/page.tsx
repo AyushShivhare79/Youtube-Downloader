@@ -33,8 +33,9 @@ const formSchema = z.object({
 export default function Home() {
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [url, setUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [downloadLoad, setDownloadLoad] = useState<string>('');
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -118,7 +119,7 @@ export default function Home() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
+    setFetchLoading(true);
     setUrl(values.url);
     try {
       const response = await axios.post('/api/download', { url: values.url });
@@ -128,7 +129,7 @@ export default function Home() {
     } catch (err) {
       console.error('Error fetching video:', err);
     } finally {
-      setIsLoading(false);
+      setFetchLoading(false);
     }
   };
 
@@ -173,7 +174,7 @@ export default function Home() {
                         variant={'secondary'}
                         type="submit"
                       >
-                        {isLoading ? 'Processing...' : 'Start'}
+                        {fetchLoading ? 'Processing...' : 'Start'}
                       </Button>
                     </div>
                   </FormControl>
@@ -184,40 +185,45 @@ export default function Home() {
           </form>
         </Form>
 
-        {videoInfo && (
-          <div className="w-full max-w-3xl px-4">
-            {isLoading && <SkewLoader color="#ffffff" />}
-            <h2 className="mb-6 text-center text-2xl font-semibold">{videoInfo.title}</h2>
+        {fetchLoading ? (
+          <SkewLoader color="#ffffff" />
+        ) : (
+          <div>
+            {videoInfo && (
+              <div className="w-full max-w-3xl px-4">
+                <h2 className="mb-6 text-center text-2xl font-semibold">{videoInfo.title}</h2>
 
-            <div className="mb-6 rounded-lg bg-zinc-900 p-6">
-              <h3 className="mb-4 text-xl font-semibold">Available Quality Options</h3>
+                <div className="mb-6 rounded-lg bg-zinc-900 p-6">
+                  <h3 className="mb-4 text-xl font-semibold">Available Quality Options</h3>
 
-              <div className="space-y-3">
-                {videoInfo.availableQualities.map((option, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between rounded-md bg-zinc-800 p-3"
-                  >
-                    <div>
-                      <span className="font-medium">{option.quality}</span>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      onClick={() => downloadVideo(option.quality)}
-                      disabled={isLoading}
-                      className="text-sm"
-                    >
-                      {downloadLoad.includes(option.quality) && (
-                        <Loader2Icon className="animate-spin" />
-                      )}
+                  <div className="space-y-3">
+                    {videoInfo.availableQualities.map((option, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between rounded-md bg-zinc-800 p-3"
+                      >
+                        <div>
+                          <span className="font-medium">{option.quality}</span>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          onClick={() => downloadVideo(option.quality)}
+                          disabled={isLoading}
+                          className="text-sm"
+                        >
+                          {downloadLoad.includes(option.quality) && (
+                            <Loader2Icon className="animate-spin" />
+                          )}
 
-                      {/* {isLoading ? "Please wait" : "Download"} */}
-                      {downloadLoad.includes(option.quality) ? 'Please wait' : 'Download'}
-                    </Button>
+                          {/* {isLoading ? "Please wait" : "Download"} */}
+                          {downloadLoad.includes(option.quality) ? 'Please wait' : 'Download'}
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
