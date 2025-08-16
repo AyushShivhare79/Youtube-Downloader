@@ -36,10 +36,14 @@ export default function Home() {
   const [downloadLoad, setDownloadLoad] = useState<string>('');
   const [fetchLoading, setFetchLoading] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [githubRepo, setGithubRepo] = useState<string>('');
 
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Set environment variables safely after component mounts
+    setGithubRepo(process.env.NEXT_PUBLIC_GITHUB_REPO || 'https://github.com/');
+
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === '/') {
         const isInputFocused = document.activeElement === inputRef.current;
@@ -137,7 +141,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-black text-white">
       <header className="flex h-[7dvh] items-center justify-between p-4 px-10">
         <h1 className="text-2xl font-medium">Icon</h1>
-        <Link target="_blank" href={process.env.NEXT_PUBLIC_GITHUB_REPO!}>
+        <Link target="_blank" href={githubRepo}>
           <FaGithub size={30} />
         </Link>
       </header>
@@ -215,7 +219,6 @@ export default function Home() {
                             <Loader2Icon className="animate-spin" />
                           )}
 
-                          {/* {isLoading ? "Please wait" : "Download"} */}
                           {downloadLoad.includes(option.quality) ? 'Please wait' : 'Download'}
                         </Button>
                       </div>
