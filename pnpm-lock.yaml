@@ -44,6 +44,12 @@ importers:
       fluent-ffmpeg-multistream:
         specifier: ^1.0.0
         version: 1.0.0
+      http-proxy-agent:
+        specifier: ^7.0.2
+        version: 7.0.2
+      https-proxy-agent:
+        specifier: ^7.0.6
+        version: 7.0.6
       lucide-react:
         specifier: ^0.532.0
         version: 0.532.0(react@19.1.0)
@@ -1406,6 +1412,10 @@ packages:
     peerDependenciesMeta:
       undici:
         optional: true
+
+  http-proxy-agent@7.0.2:
+    resolution: {integrity: sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==}
+    engines: {node: '>= 14'}
 
   http-response-object@3.0.2:
     resolution: {integrity: sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==}
@@ -3812,6 +3822,13 @@ snapshots:
       tough-cookie: 5.1.2
     optionalDependencies:
       undici: 7.12.0
+
+  http-proxy-agent@7.0.2:
+    dependencies:
+      agent-base: 7.1.4
+      debug: 4.4.1
+    transitivePeerDependencies:
+      - supports-color
 
   http-response-object@3.0.2:
     dependencies:
