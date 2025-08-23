@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
       Buffer.from(process.env.YOUTUBE_COOKIES!, 'base64').toString('utf-8'),
     );
 
+    console.log('Cookies:', cookies);
+
     const agent = ytdl.createAgent(cookies);
 
     const info = await ytdl.getInfo(url as string, { agent });
